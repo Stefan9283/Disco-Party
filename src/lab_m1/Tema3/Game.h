@@ -3,14 +3,13 @@
 #include "components/simple_scene.h"
 
 #include "Common.h"
+#include "Object/Object.h"
 
 class Game : public gfxc::SimpleScene {
 public:
     Game();
     ~Game();
     void Init() override;
-
-    double getTime();
 
 private:
     static Game* instance;
@@ -27,4 +26,8 @@ private:
     void OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) override;
     void OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) override;
     void OnWindowResize(int width, int height) override;
+
+    Texture2D* CreateRandomTexture(unsigned int width, unsigned int height);
+    float time = 0;
+    std::vector<Object*> objects;
 };
