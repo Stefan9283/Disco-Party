@@ -5,6 +5,7 @@
 #define DISCOBALL 2
 #define DANCER 3
 #define WALL 4
+#define SPOTLIGHT 5
 
 glm::mat4 Transform::toMat4() {
 	return glm::translate(glm::mat4(1), pos) *
@@ -20,7 +21,7 @@ FloorTile::FloorTile() {
 
 void FloorTile::render(Shader* s) {
 	// TODO
-	glUniform1i(s->GetUniformLocation("tileIdx"), lightIndex);
+	glUniform1i(s->GetUniformLocation("idx"), lightIndex);
 	glUniform1i(s->GetUniformLocation("type"), type);
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	glUniform3f(s->GetUniformLocation(std::string("lights[").append(std::to_string(lightIndex)).append("].color").c_str()), color.x, color.y, color.z);
@@ -71,3 +72,88 @@ void DiscoBall::render(Shader* s) {
 }
 
 void DiscoBall::update(float dt) {/* NOTHING */ }
+
+Dancer::Dancer() {
+	type = DANCER;
+	next_pos = generateRandomPosition();
+}
+
+void Dancer::render(Shader* s) {
+	glUniform1i(s->GetUniformLocation("type"), type);
+	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
+	mesh->Render();
+}
+
+void Dancer::update(float dt) {
+	// TODO update position
+	glm::vec3 pos = model.pos;
+	pos.y = 0;
+	
+	if (glm::distance(pos, next_pos) <= 0.05) {
+		next_pos = generateRandomPosition();
+	} else {
+		glm::vec3 dir = glm::normalize(next_pos - pos);
+		model.pos += dir * 0.05f;
+	}
+}
+
+glm::vec3 Dancer::generateRandomPosition()
+{
+	float x = rand() % 70 - 30;
+	float z = rand() % 70 - 30;
+	return glm::vec3(x, 0, z) / 10.f;
+}
+
+
+
+Spotlight::Spotlight() {
+	type = SPOTLIGHT;
+	
+	color = generateRandomColor();
+	next_color = color;
+	
+	dir = generateRandomDir();
+	next_dir = dir;
+}
+
+void Spotlight::render(Shader* s) {
+	// TODO
+	glUniform1i(s->GetUniformLocation("type"), type);
+	glUniform3f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].color").c_str()), color.x, color.y, color.z);
+	glUniform3f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].position").c_str()), model.pos.x, model.pos.y, model.pos.z);
+	glUniform3f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].direction").c_str()), dir.x, dir.y, dir.z);
+	glUniform1f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].cutoff").c_str()), 30);
+	glUniform1i(s->GetUniformLocation("idx"), spotlight_index);
+
+	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
+	mesh->Render();
+}
+
+void Spotlight::update(float dt) {
+	// TODO
+	if (glm::distance(color, next_color) <= 0.05) {
+		next_color = generateRandomColor();
+	}
+	else {
+		color += glm::normalize(next_color - color) * 0.01f;
+	}
+
+	if (glm::distance(dir, next_dir) <= 0.01) {
+		next_dir = generateRandomDir();
+	}
+	else {
+		// TODO fix it
+		dir += glm::normalize(next_dir - dir) * 0.003f;
+		dir = glm::normalize(dir);
+		model.rot = glm::quatLookAt(dir, glm::vec3(0, 1, 0)); 
+	}
+}
+
+glm::vec3 Spotlight::generateRandomDir()
+{
+	float x = rand() % 800 - 400;
+	float z = rand() % 800 - 400;
+	glm::vec3 floorPos = glm::vec3(x, 0, z) / 100.f;
+	auto newdir = glm::normalize(floorPos - model.pos);
+	return newdir;
+}

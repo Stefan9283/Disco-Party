@@ -9,6 +9,11 @@ Game::~Game() {
 void Game::Init() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+    // aceasta directiva este folosita pentru nu se scrie in depth buffer
+    //glDepthMask(GL_FALSE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #pragma region assets
     {
         Mesh* mesh = new Mesh("box");
@@ -23,6 +28,11 @@ void Game::Init() {
     {
         Mesh* mesh = new Mesh("quad");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "quad.obj");
+        meshes[mesh->GetMeshID()] = mesh;
+    }
+    {
+        Mesh* mesh = new Mesh("cone");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "cone.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
 #pragma endregion
@@ -50,7 +60,7 @@ void Game::Init() {
             }
     }
     // WALLS
-    float wallsHeight = 8;
+    float wallsHeight = 5;
     { 
         {
             Wall* o = new Wall();
@@ -110,6 +120,70 @@ void Game::Init() {
         glUniform1i(glGetUniformLocation(shaders["basic"]->program, "discoBallTex"), 1);
     }
 
+    // DANCERS
+    float dancers_height = 1.f;
+    {
+        {
+            Dancer* o = new Dancer;
+            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.pos.y = dancers_height / 2;
+            o->mesh = meshes["box"];
+            objects.push_back(o);
+        }
+    
+        {
+            Dancer* o = new Dancer;
+            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.pos.y = dancers_height / 2;
+            o->mesh = meshes["box"];
+            objects.push_back(o);
+        }
+
+        {
+            Dancer* o = new Dancer;
+            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.pos.y = dancers_height / 2;
+            o->mesh = meshes["box"];
+            objects.push_back(o);
+        }
+
+    }
+    
+    // SPOTLIGHTS
+    {
+      /*  {
+            Spotlight* o = new Spotlight;
+            o->mesh = meshes["cone"];
+            o->model.pos = glm::vec3(-2, wallsHeight, -2);
+            o->model.scale = glm::vec3(1, wallsHeight, 1);
+            o->spotlight_index = 0;
+            objects.push_back(o);
+        }
+        {
+            Spotlight* o = new Spotlight;
+            o->mesh = meshes["cone"];
+            o->model.pos = glm::vec3(2, wallsHeight, -2);
+            o->model.scale = glm::vec3(1, wallsHeight, 1);
+            o->spotlight_index = 1;
+            objects.push_back(o);
+        }
+        {
+            Spotlight* o = new Spotlight;
+            o->mesh = meshes["cone"];
+            o->model.pos = glm::vec3(-2, wallsHeight, 2);
+            o->model.scale = glm::vec3(1, wallsHeight, 1);
+            o->spotlight_index = 2;
+            objects.push_back(o);
+        }*/
+        {
+            Spotlight* o = new Spotlight;
+            o->mesh = meshes["cone"];
+            o->model.pos = glm::vec3(2, wallsHeight, 2);
+            o->model.scale = glm::vec3(1, wallsHeight, 1);
+            o->spotlight_index = 3;
+            objects.push_back(o);
+        }
+    }
 
     GetSceneCamera()->SetPosition(glm::vec3(0, 6, 10));
 }
@@ -198,6 +272,6 @@ void Game::FrameStart() {
     glViewport(0, 0, resolution.x, resolution.y);
 }
 void Game::FrameEnd() {
-    DrawCoordinateSystem(GetSceneCamera()->GetViewMatrix(), GetSceneCamera()->GetProjectionMatrix());
+    //DrawCoordinateSystem(GetSceneCamera()->GetViewMatrix(), GetSceneCamera()->GetProjectionMatrix());
 }
 

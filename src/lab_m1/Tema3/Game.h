@@ -30,4 +30,10 @@ private:
     Texture2D* CreateRandomTexture(unsigned int width, unsigned int height);
     float time = 0;
     std::vector<Object*> objects;
+
+   //std::vector<Spotlight*> spotlights;
+   //std::vector<Dancer*> dancers;
+   //std::vector<Wall*> walls;
+   //std::vector<FloorTile*> tiles;
+   //DiscoBall* discoball;
 };
