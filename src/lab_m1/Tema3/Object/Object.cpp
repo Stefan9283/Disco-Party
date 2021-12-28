@@ -18,7 +18,6 @@ FloorTile::FloorTile() {
 	color = generateRandomColor();
 	next_color = generateRandomColor();
 }
-
 void FloorTile::render(Shader* s) {
 	// TODO
 	glUniform1i(s->GetUniformLocation("idx"), lightIndex);
@@ -29,7 +28,6 @@ void FloorTile::render(Shader* s) {
 
 	mesh->Render();
 }
-
 void FloorTile::update(float dt) {
 	if (glm::distance(color, next_color) <= 0.01) {
 		next_color = generateRandomColor();
@@ -50,19 +48,16 @@ glm::vec3 generateRandomColor() {
 Wall::Wall(){
 	type = WALL;
 }
-
 void Wall::render(Shader* s) {
 	glUniform1i(s->GetUniformLocation("type"), type);
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	mesh->Render();
 }
-
 void Wall::update(float dt) { /* DOES NOTHING */ }
 
 DiscoBall::DiscoBall() {
 	type = DISCOBALL;
 }
-
 void DiscoBall::render(Shader* s) {
 	// TODO
 	glUniform1i(s->GetUniformLocation("type"), type);
@@ -70,20 +65,17 @@ void DiscoBall::render(Shader* s) {
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	mesh->Render();
 }
-
 void DiscoBall::update(float dt) {/* NOTHING */ }
 
 Dancer::Dancer() {
 	type = DANCER;
 	next_pos = generateRandomPosition();
 }
-
 void Dancer::render(Shader* s) {
 	glUniform1i(s->GetUniformLocation("type"), type);
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	mesh->Render();
 }
-
 void Dancer::update(float dt) {
 	// TODO update position
 	glm::vec3 pos = model.pos;
@@ -112,10 +104,10 @@ Spotlight::Spotlight() {
 	color = generateRandomColor();
 	next_color = color;
 	
-	dir = generateRandomDir();
-	next_dir = dir;
+	dir = glm::vec3(0, -1, 0);
+	next_dir = generateRandomDir();
+	model.rot = glm::quat(glm::vec3(0, 0, 0));
 }
-
 void Spotlight::render(Shader* s) {
 	// TODO
 	glUniform1i(s->GetUniformLocation("type"), type);
@@ -128,7 +120,6 @@ void Spotlight::render(Shader* s) {
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	mesh->Render();
 }
-
 void Spotlight::update(float dt) {
 	// TODO
 	if (glm::distance(color, next_color) <= 0.05) {
@@ -142,17 +133,15 @@ void Spotlight::update(float dt) {
 		next_dir = generateRandomDir();
 	}
 	else {
-		// TODO fix it
-		dir += glm::normalize(next_dir - dir) * 0.003f;
+		auto rotation_needed = glm::rotation(dir, next_dir);
+		dir += glm::normalize(next_dir - dir) * 0.005f;
 		dir = glm::normalize(dir);
-		model.rot = glm::quatLookAt(dir, glm::vec3(0, 1, 0)); 
+		model.rot = glm::lerp(model.rot, rotation_needed, 0.005f);
 	}
 }
-
-glm::vec3 Spotlight::generateRandomDir()
-{
-	float x = rand() % 800 - 400;
-	float z = rand() % 800 - 400;
+glm::vec3 Spotlight::generateRandomDir() {
+	float x = rand() % 600 - 600;
+	float z = rand() % 600 - 600;
 	glm::vec3 floorPos = glm::vec3(x, 0, z) / 100.f;
 	auto newdir = glm::normalize(floorPos - model.pos);
 	return newdir;

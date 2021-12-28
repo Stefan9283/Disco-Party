@@ -151,7 +151,7 @@ void Game::Init() {
     
     // SPOTLIGHTS
     {
-      /*  {
+        {
             Spotlight* o = new Spotlight;
             o->mesh = meshes["cone"];
             o->model.pos = glm::vec3(-2, wallsHeight, -2);
@@ -174,7 +174,7 @@ void Game::Init() {
             o->model.scale = glm::vec3(1, wallsHeight, 1);
             o->spotlight_index = 2;
             objects.push_back(o);
-        }*/
+        }
         {
             Spotlight* o = new Spotlight;
             o->mesh = meshes["cone"];
