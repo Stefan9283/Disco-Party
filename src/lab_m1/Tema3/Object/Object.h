@@ -35,6 +35,7 @@ public:
 
 class Wall : public Object {
 public:
+	std::vector<FloorTile*> closestTiles;
 	Wall();
 	void render(Shader* s) override;
 	void update(float dt) override;
@@ -53,6 +54,7 @@ class Dancer : public Object {
 public:
 	glm::vec3 next_pos;
 	glm::vec3 generateRandomPosition();
+	std::vector<Object*> *game_assets;
 	Dancer();
 	void render(Shader* s) override;
 	void update(float dt) override;
@@ -62,7 +64,7 @@ class Spotlight : public Object {
 public:
 	glm::vec3 color, next_color, dir, next_dir; // TODO use them
 	int spotlight_index;
-	Spotlight();
+	Spotlight(glm::vec3 pos);
 	void render(Shader* s) override;
 	void update(float dt) override;
 	glm::vec3 generateRandomDir();

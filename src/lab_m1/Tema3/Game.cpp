@@ -1,4 +1,6 @@
 #include "Game.h"
+#include "components/transform.h"
+
 
 Game::Game() {}
 Game::~Game() {
@@ -56,44 +58,61 @@ void Game::Init() {
                 o->model.scale = glm::vec3(0.5f);
                 o->lightIndex = i * 8 + j;
                 o->mesh = meshes["quad"];
+
+               
                 objects.push_back(o);
             }
     }
+    
     // WALLS
     float wallsHeight = 5;
     { 
-        {
+        // front // o->lightIndex % 8 == 7
+        // back // o->lightIndex % 8 == 0
+        // left // o->lightIndex < 8
+        // right // o->lightIndex >= 8 * 7
+        { // right
             Wall* o = new Wall();
             o->model.pos = { 4, wallsHeight / 2, 0 };
             o->model.rot = glm::quat(glm::vec3(0, glm::radians(90.f), 0));
             o->model.scale = glm::vec3(4, wallsHeight / 2, 4);
             o->mesh = meshes["quad"];
+            for (int i = 0; i < 64; i++)
+                if (((FloorTile*)objects[i])->lightIndex >= 8 * 7)
+                    o->closestTiles.push_back((FloorTile*)objects[i]);
             objects.push_back(o);
         }
 
-        {
+        { // left
             Wall* o = new Wall();
             o->model.pos = { -4, wallsHeight / 2, 0 };
             o->model.rot = glm::quat(glm::vec3(0, glm::radians(-90.f), 0));
             o->model.scale = glm::vec3(4, wallsHeight / 2, 4);
             o->mesh = meshes["quad"];
+            for (int i = 0; i < 64; i++)
+                if (((FloorTile*)objects[i])->lightIndex < 8)
+                    o->closestTiles.push_back((FloorTile*)objects[i]);
             objects.push_back(o);
         }
-
-        {
+        { // front
             Wall* o = new Wall();
             o->model.pos = { 0, wallsHeight / 2, 4 };
             o->model.scale = glm::vec3(4, wallsHeight / 2, 4);
             o->mesh = meshes["quad"];
+            for (int i = 0; i < 64; i++)
+                if (((FloorTile*)objects[i])->lightIndex % 8 == 7)
+                    o->closestTiles.push_back((FloorTile*)objects[i]);
             objects.push_back(o);
         }
-
-        {
+        { // back
             Wall* o = new Wall();
             o->model.pos = { 0, wallsHeight / 2, -4 };
             o->model.rot = glm::quat(glm::vec3(0, glm::radians(180.f), 0));
             o->model.scale = glm::vec3(4, wallsHeight / 2, 4);
             o->mesh = meshes["quad"];
+            for (int i = 0; i < 64; i++)
+                if (((FloorTile*)objects[i])->lightIndex % 8 == 0)
+                    o->closestTiles.push_back((FloorTile*)objects[i]);
             objects.push_back(o);
         }
 
@@ -128,6 +147,7 @@ void Game::Init() {
             o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
+            o->game_assets = &objects;
             objects.push_back(o);
         }
     
@@ -136,6 +156,7 @@ void Game::Init() {
             o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
+            o->game_assets = &objects;
             objects.push_back(o);
         }
 
@@ -144,6 +165,7 @@ void Game::Init() {
             o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
+            o->game_assets = &objects;
             objects.push_back(o);
         }
 
@@ -152,33 +174,29 @@ void Game::Init() {
     // SPOTLIGHTS
     {
         {
-            Spotlight* o = new Spotlight;
+            Spotlight* o = new Spotlight({ -2, wallsHeight, -2 });
             o->mesh = meshes["cone"];
-            o->model.pos = glm::vec3(-2, wallsHeight, -2);
             o->model.scale = glm::vec3(1, wallsHeight, 1);
             o->spotlight_index = 0;
             objects.push_back(o);
         }
         {
-            Spotlight* o = new Spotlight;
+            Spotlight* o = new Spotlight({ 2, wallsHeight, -2 });
             o->mesh = meshes["cone"];
-            o->model.pos = glm::vec3(2, wallsHeight, -2);
             o->model.scale = glm::vec3(1, wallsHeight, 1);
             o->spotlight_index = 1;
             objects.push_back(o);
         }
         {
-            Spotlight* o = new Spotlight;
+            Spotlight* o = new Spotlight({ -2, wallsHeight, 2 });
             o->mesh = meshes["cone"];
-            o->model.pos = glm::vec3(-2, wallsHeight, 2);
             o->model.scale = glm::vec3(1, wallsHeight, 1);
             o->spotlight_index = 2;
             objects.push_back(o);
         }
         {
-            Spotlight* o = new Spotlight;
+            Spotlight* o = new Spotlight({ 2, wallsHeight, 2 });
             o->mesh = meshes["cone"];
-            o->model.pos = glm::vec3(2, wallsHeight, 2);
             o->model.scale = glm::vec3(1, wallsHeight, 1);
             o->spotlight_index = 3;
             objects.push_back(o);
@@ -192,8 +210,9 @@ void Game::Update(float deltaTimeSeconds) {
     auto shader = shaders["basic"];
     
     shader->Use();
-    auto viewMatrix = GetSceneCamera()->GetViewMatrix();
-    auto eye = glm::vec3(-viewMatrix[3][0], -viewMatrix[3][1], -viewMatrix[3][2]); // TODO check if it works
+
+    auto eye = GetSceneCamera()->m_transform->GetWorldPosition();
+    glUniform1i(shader->GetUniformLocation("mode"), mode);
     glUniform1f(shader->GetUniformLocation("time"), time);
     glUniform3f(shader->GetUniformLocation("eye"), eye.x, eye.y, eye.z);
     glUniformMatrix4fv(shader->GetUniformLocation("View"), 1, GL_FALSE, glm::value_ptr(GetSceneCamera()->GetViewMatrix()));
@@ -207,7 +226,9 @@ void Game::Update(float deltaTimeSeconds) {
     time += deltaTimeSeconds;
 }
 
-void Game::OnInputUpdate(float deltaTime, int mods) {}
+void Game::OnInputUpdate(float deltaTime, int mods) {
+   
+}
 
 void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY){}
 
@@ -260,7 +281,12 @@ Texture2D* Game::CreateRandomTexture(unsigned int width, unsigned int height) {
 void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods) {}
 void Game::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) {}
 void Game::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) {}
-void Game::OnKeyPress(int key, int mods) {}
+void Game::OnKeyPress(int key, int mods) {
+    if (window->KeyHold(GLFW_KEY_SPACE)) {
+        mode++;
+        mode %= 4;
+    }
+}
 void Game::OnKeyRelease(int key, int mods) {}
 void Game::FrameStart() {
     // Clears the color buffer (using the previously set color) and depth buffer

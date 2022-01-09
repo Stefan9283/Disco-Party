@@ -12,8 +12,6 @@ public:
     void Init() override;
 
 private:
-    static Game* instance;
-
     void FrameStart() override;
     void Update(float deltaTimeSeconds) override;
     void FrameEnd() override;
@@ -29,11 +27,8 @@ private:
 
     Texture2D* CreateRandomTexture(unsigned int width, unsigned int height);
     float time = 0;
-    std::vector<Object*> objects;
+    int mode = 1;
 
-   //std::vector<Spotlight*> spotlights;
-   //std::vector<Dancer*> dancers;
-   //std::vector<Wall*> walls;
-   //std::vector<FloorTile*> tiles;
-   //DiscoBall* discoball;
+public:
+    std::vector<Object*> objects;
 };
