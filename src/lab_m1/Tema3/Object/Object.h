@@ -24,18 +24,23 @@ public:
 	virtual void update(float dt) = 0;
 };
 
-class FloorTile : public Object {
+class LightSource : public Object {
 public:
-	glm::vec3 color, next_color;
+	glm::vec3 color = glm::vec3(1);
+};
+
+class FloorTile : public LightSource {
+public:
+	glm::vec3 next_color;
 	int lightIndex;
 	FloorTile();
 	void render(Shader* s) override;
 	void update(float dt) override;
 };
 
-class Wall : public Object {
+class Wall : public LightSource {
 public:
-	std::vector<FloorTile*> closestTiles;
+	std::vector<LightSource*> closestTiles;
 	Wall();
 	void render(Shader* s) override;
 	void update(float dt) override;

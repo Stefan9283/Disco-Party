@@ -37,6 +37,11 @@ void Game::Init() {
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "cone.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
+    {
+        Mesh* mesh = new Mesh("dancer1");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "Tema3"), "dancer1.obj");
+        meshes[mesh->GetMeshID()] = mesh;
+    }
 #pragma endregion
 #pragma region shaders
     {
@@ -47,6 +52,7 @@ void Game::Init() {
         shaders[shader->GetName()] = shader;
     }
 #pragma endregion
+    float wallsHeight = 5;
 
     // FLOOR
     {
@@ -63,9 +69,21 @@ void Game::Init() {
                 objects.push_back(o);
             }
     }
+
+    // DISCO BALL
+    {
+        DiscoBall* o = new DiscoBall();
+        o->texture = CreateRandomTexture(16, 16);
+        o->mesh = meshes["sphere"];
+        o->model.pos.y = wallsHeight - 0.5;
+        objects.push_back(o);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, o->texture->GetTextureID());
+        glUniform1i(glGetUniformLocation(shaders["basic"]->program, "discoBallTex"), 1);
+    }
     
     // WALLS
-    float wallsHeight = 5;
     { 
         // front // o->lightIndex % 8 == 7
         // back // o->lightIndex % 8 == 0
@@ -79,7 +97,7 @@ void Game::Init() {
             o->mesh = meshes["quad"];
             for (int i = 0; i < 64; i++)
                 if (((FloorTile*)objects[i])->lightIndex >= 8 * 7)
-                    o->closestTiles.push_back((FloorTile*)objects[i]);
+                    o->closestTiles.push_back((LightSource*)objects[i]);
             objects.push_back(o);
         }
 
@@ -91,7 +109,7 @@ void Game::Init() {
             o->mesh = meshes["quad"];
             for (int i = 0; i < 64; i++)
                 if (((FloorTile*)objects[i])->lightIndex < 8)
-                    o->closestTiles.push_back((FloorTile*)objects[i]);
+                    o->closestTiles.push_back((LightSource*)objects[i]);
             objects.push_back(o);
         }
         { // front
@@ -101,7 +119,7 @@ void Game::Init() {
             o->mesh = meshes["quad"];
             for (int i = 0; i < 64; i++)
                 if (((FloorTile*)objects[i])->lightIndex % 8 == 7)
-                    o->closestTiles.push_back((FloorTile*)objects[i]);
+                    o->closestTiles.push_back((LightSource*)objects[i]);
             objects.push_back(o);
         }
         { // back
@@ -112,11 +130,10 @@ void Game::Init() {
             o->mesh = meshes["quad"];
             for (int i = 0; i < 64; i++)
                 if (((FloorTile*)objects[i])->lightIndex % 8 == 0)
-                    o->closestTiles.push_back((FloorTile*)objects[i]);
+                    o->closestTiles.push_back((LightSource*)objects[i]);
             objects.push_back(o);
         }
-
-        {
+        { // top
             Wall* o = new Wall();
             o->model.pos = { 0, wallsHeight, 0};
             o->model.rot = glm::quat(glm::vec3(glm::radians(-90.f), 0, 0));
@@ -126,25 +143,14 @@ void Game::Init() {
         }
     }
 
-    // DISCO BALL
-    {
-        DiscoBall* o = new DiscoBall();
-        o->texture = CreateRandomTexture(16, 16);
-        o->mesh = meshes["sphere"];
-        o->model.pos.y = wallsHeight - 1;
-        objects.push_back(o);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, o->texture->GetTextureID());
-        glUniform1i(glGetUniformLocation(shaders["basic"]->program, "discoBallTex"), 1);
-    }
+   
 
     // DANCERS
     float dancers_height = 1.f;
     {
         {
             Dancer* o = new Dancer;
-            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.scale = glm::vec3(0.5, 1, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
             o->game_assets = &objects;
@@ -153,7 +159,7 @@ void Game::Init() {
     
         {
             Dancer* o = new Dancer;
-            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.scale = glm::vec3(0.5, 1, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
             o->game_assets = &objects;
@@ -162,7 +168,7 @@ void Game::Init() {
 
         {
             Dancer* o = new Dancer;
-            o->model.scale = glm::vec3(0.5, dancers_height, 0.5);
+            o->model.scale = glm::vec3(0.5, 1, 0.5);
             o->model.pos.y = dancers_height / 2;
             o->mesh = meshes["box"];
             o->game_assets = &objects;
@@ -203,7 +209,7 @@ void Game::Init() {
         }
     }
 
-    GetSceneCamera()->SetPosition(glm::vec3(0, 6, 10));
+    GetSceneCamera()->SetPosition(glm::vec3(0, 3, 10));
 }
 
 void Game::Update(float deltaTimeSeconds) {

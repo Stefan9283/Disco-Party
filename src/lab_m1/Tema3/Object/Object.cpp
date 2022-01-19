@@ -50,12 +50,19 @@ Wall::Wall(){
 }
 void Wall::render(Shader* s) {
 	glUniform1i(s->GetUniformLocation("type"), type);
+
+	for (int i = 0; i < 9; i++) {
+		glUniform3f(s->GetUniformLocation(std::string("lights[").append(std::to_string(i)).append("].color").c_str()), 0, 0, 0);
+		glUniform3f(s->GetUniformLocation(std::string("lights[").append(std::to_string(i)).append("].position").c_str()), 0, 100, 0);
+	}
+
 	for (int i = 0; i < closestTiles.size(); i++) {
 		glm::vec3 color = closestTiles[i]->color;
 		glm::vec3 pos = closestTiles[i]->model.pos;
 		glUniform3f(s->GetUniformLocation(std::string("lights[").append(std::to_string(i)).append("].color").c_str()), color.x, color.y, color.z);
 		glUniform3f(s->GetUniformLocation(std::string("lights[").append(std::to_string(i)).append("].position").c_str()), pos.x, pos.y, pos.z);
 	}
+	
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
 	mesh->Render();
 }
@@ -65,7 +72,6 @@ DiscoBall::DiscoBall() {
 	type = DISCOBALL;
 }
 void DiscoBall::render(Shader* s) {
-	// TODO
 	glUniform1i(s->GetUniformLocation("type"), type);
 	glUniform3f(s->GetUniformLocation("disco_ball_position"), model.pos.x, model.pos.y, model.pos.z);
 	glUniformMatrix4fv(s->GetUniformLocation("Model"), 1, GL_FALSE, glm::value_ptr(this->model.toMat4()));
@@ -108,7 +114,7 @@ void Dancer::update(float dt) {
 		next_pos = generateRandomPosition();
 	} else {
 		glm::vec3 dir = glm::normalize(next_pos - pos);
-		model.pos += dir * 0.05f;
+		model.pos += dir * 0.01f;
 	}
 }
 
@@ -117,8 +123,6 @@ glm::vec3 Dancer::generateRandomPosition() {
 	float z = rand() % 70 - 30;
 	return glm::vec3(x, 0, z) / 10.f;
 }
-
-
 
 Spotlight::Spotlight(glm::vec3 pos) {
 	type = SPOTLIGHT;
@@ -146,7 +150,6 @@ void Spotlight::render(Shader* s) {
 	mesh->Render();
 }
 void Spotlight::update(float dt) {
-	// TODO
 	if (glm::distance(color, next_color) <= 0.05) {
 		next_color = generateRandomColor();
 	} else {

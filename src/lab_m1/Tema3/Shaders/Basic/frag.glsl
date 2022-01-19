@@ -45,9 +45,8 @@ uniform sampler2D discoBallTex;
 
 vec3 PointLightContribution(lightSource light) {
     //calculele componentelor difuze si speculare din modelul Phong de iluminare pentru lumina punctiforma
-
     float att = 0.0f;
-    float light_radius = 1.2;
+    float light_radius = 1.2f;
 
     vec3 light_dir = light.position - fragpos;
 
@@ -59,14 +58,14 @@ vec3 PointLightContribution(lightSource light) {
         att = pow(light_radius - dist, 1);
 
     float intensity = max(dot(light_dir, normal), 0);
-    vec3 diffuse = att * intensity * light.color;
 
-    vec3 specular = att * light.color * intensity * pow(max(dot(V, R), 0), 1);
+    vec3 diffuse =  light.color;
+    vec3 specular = light.color * pow(max(dot(V, R), 0), 1);
 
-    return diffuse + specular;
+    return att * intensity * (diffuse + specular);
 }
 vec3 getDiscoBallLight() {
-    vec3 color;
+    
     vec3 light_dir = fragpos - disco_ball_position;
 
     // texcoord este coordonata de textura utilizata pentru esantionare
@@ -75,8 +74,13 @@ vec3 getDiscoBallLight() {
     texcoord.y = (1.0 / PI) * acos(light_dir.y / length(light_dir));
 
     // color este culoarea corespunzatoare pozitiei world_position
-    color = texture(discoBallTex, texcoord).xyz;
-    return color;
+    vec3 color = texture(discoBallTex, texcoord).xyz;
+
+    lightSource discoball;
+    discoball.color = vec3(1);
+    discoball.position = disco_ball_position;
+
+    return PointLightContribution(discoball) + color;
 }
 vec3 getSpotlightLight(directionalLightSource spotlight) {
     vec3 L = normalize(fragpos - spotlight.position);
@@ -132,7 +136,6 @@ void main() {
             for (int i = 0; i < 9; i++)
                 color += vec4(PointLightContribution(lights[i]), 1);
         if (mode == 0 || mode == 3) color += vec4(discoBallFactor * getDiscoBallLight(), 1);
-        color.w = 1;
     } else if (type == DiscoBall) {
         if (mode == 0 || mode == 3) color += vec4(getDiscoBallLight(), 1);
     } else if (type == Dancer) {
