@@ -14,6 +14,23 @@ glm::mat4 Transform::toMat4() {
 		glm::toMat4(rot) *
 		glm::scale(glm::mat4(1), scale);
 }
+glm::vec3 generateRandomColor() {
+	float r, g, b;
+	r = rand() % 256;
+	g = rand() % 256;
+	b = rand() % 256;
+	return glm::vec3(r, g, b) / 255.f;
+}
+glm::vec3 Dancer::generateRandomPosition() {
+	float x = rand() % 70 - 30;
+	float z = rand() % 70 - 30;
+	return glm::vec3(x, 0, z) / 10.f;
+}
+
+
+
+
+
 
 FloorTile::FloorTile() {
 	type = FLOOR;
@@ -37,13 +54,14 @@ void FloorTile::update(float dt) {
 	}
 }
 
-glm::vec3 generateRandomColor() {
-	float r, g, b;
-	r = rand() % 256;
-	g = rand() % 256;
-	b = rand() % 256;
-	return glm::vec3(r, g, b) / 255.f;
-}
+
+
+
+
+
+
+
+
 
 Wall::Wall(){
 	type = WALL;
@@ -68,8 +86,13 @@ void Wall::render(Shader* s) {
 }
 void Wall::update(float dt) { /* DOES NOTHING */ }
 
+
+
+
+
 DiscoBall::DiscoBall() {
 	type = DISCOBALL;
+	texture = nullptr;
 }
 void DiscoBall::render(Shader* s) {
 	glUniform1i(s->GetUniformLocation("type"), type);
@@ -79,11 +102,14 @@ void DiscoBall::render(Shader* s) {
 }
 void DiscoBall::update(float dt) {/* NOTHING */ }
 
-// #include "lab_m1/Tema3/Game.h"
+
+
 
 Dancer::Dancer() {
 	type = DANCER;
 	next_pos = generateRandomPosition();
+	start_pos = model.pos;
+	jumping = true;
 }
 void Dancer::render(Shader* s) {
 	glUniform1i(s->GetUniformLocation("type"), type);
@@ -106,27 +132,37 @@ void Dancer::render(Shader* s) {
 	mesh->Render();
 }
 void Dancer::update(float dt) {
-	// TODO update position
-	glm::vec3 pos = model.pos;
-	pos.y = 0;
-	
-	if (glm::distance(pos, next_pos) <= 0.05) {
+	if (glm::length(model.pos.xz - next_pos.xz) < 0.05) {
+		start_pos = model.pos;
 		next_pos = generateRandomPosition();
+		jumping = false;
+		if (rand() % 5 == 0) jumping = true;
 	} else {
+		auto pos = model.pos;
+		pos.y = 0;
+
 		glm::vec3 dir = glm::normalize(next_pos - pos);
 		model.pos += dir * 0.01f;
+		if (jumping) {
+			auto l1 = glm::length(model.pos.xz - next_pos.xz);
+			auto l0 = glm::length(start_pos.xz - next_pos.xz);
+			float ratio = 1 - l1 / l0;
+			float max_height = 2;
+			if (ratio < 0.5f)
+				model.pos.y = 0.5f + glm::pow(ratio, 2) * max_height;
+			else
+				model.pos.y = 0.5f + glm::pow(1 - ratio, 2) * max_height;
+		}
 	}
 }
 
-glm::vec3 Dancer::generateRandomPosition() {
-	float x = rand() % 70 - 30;
-	float z = rand() % 70 - 30;
-	return glm::vec3(x, 0, z) / 10.f;
-}
+
+
+
+
 
 Spotlight::Spotlight(glm::vec3 pos) {
 	type = SPOTLIGHT;
-	
 	
 	model.pos = pos;
 	model.rot = glm::quat(glm::vec3(0, 0, 0));
@@ -138,7 +174,6 @@ Spotlight::Spotlight(glm::vec3 pos) {
 	next_dir = generateRandomDir();
 }
 void Spotlight::render(Shader* s) {
-	// TODO
 	glUniform1i(s->GetUniformLocation("type"), type);
 	glUniform3f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].color").c_str()), color.x, color.y, color.z);
 	glUniform3f(s->GetUniformLocation(std::string("spotlights[").append(std::to_string(spotlight_index)).append("].position").c_str()), model.pos.x, model.pos.y, model.pos.z);

@@ -2,20 +2,15 @@
 #include "components/transform.h"
 
 
-Game::Game() {}
-Game::~Game() {
-    for (auto& obj : objects)
-        delete obj;
-}
+
 
 void Game::Init() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    // aceasta directiva este folosita pentru nu se scrie in depth buffer
-    //glDepthMask(GL_FALSE);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 #pragma region assets
     {
         Mesh* mesh = new Mesh("box");
@@ -52,6 +47,7 @@ void Game::Init() {
         shaders[shader->GetName()] = shader;
     }
 #pragma endregion
+#pragma region entities
     float wallsHeight = 5;
 
     // FLOOR
@@ -144,7 +140,6 @@ void Game::Init() {
     }
 
    
-
     // DANCERS
     float dancers_height = 1.f;
     {
@@ -208,6 +203,7 @@ void Game::Init() {
             objects.push_back(o);
         }
     }
+#pragma endregion
 
     GetSceneCamera()->SetPosition(glm::vec3(0, 3, 10));
 }
@@ -232,11 +228,12 @@ void Game::Update(float deltaTimeSeconds) {
     time += deltaTimeSeconds;
 }
 
-void Game::OnInputUpdate(float deltaTime, int mods) {
-   
+void Game::OnKeyPress(int key, int mods) {
+    if (window->KeyHold(GLFW_KEY_SPACE)) {
+        mode++;
+        mode %= 4;
+    }
 }
-
-void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY){}
 
 void Game::OnWindowResize(int width, int height) {
     glm::vec2 resolution = window->GetResolution();
@@ -284,16 +281,6 @@ Texture2D* Game::CreateRandomTexture(unsigned int width, unsigned int height) {
     SAFE_FREE_ARRAY(data);
     return texture;
 }
-void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods) {}
-void Game::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) {}
-void Game::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) {}
-void Game::OnKeyPress(int key, int mods) {
-    if (window->KeyHold(GLFW_KEY_SPACE)) {
-        mode++;
-        mode %= 4;
-    }
-}
-void Game::OnKeyRelease(int key, int mods) {}
 void Game::FrameStart() {
     // Clears the color buffer (using the previously set color) and depth buffer
     glClearColor(0, 0, 0, 1);
@@ -303,7 +290,17 @@ void Game::FrameStart() {
     // Sets the screen area where to draw
     glViewport(0, 0, resolution.x, resolution.y);
 }
-void Game::FrameEnd() {
-    //DrawCoordinateSystem(GetSceneCamera()->GetViewMatrix(), GetSceneCamera()->GetProjectionMatrix());
+
+Game::Game() {}
+Game::~Game() {
+    for (auto& obj : objects)
+        delete obj;
 }
 
+void Game::FrameEnd() { /* DrawCoordinateSystem(GetSceneCamera()->GetViewMatrix(), GetSceneCamera()->GetProjectionMatrix()); */ }
+void Game::OnInputUpdate(float deltaTime, int mods) {}
+void Game::OnKeyRelease(int key, int mods) {}
+void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {}
+void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods) {}
+void Game::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) {}
+void Game::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) {}
